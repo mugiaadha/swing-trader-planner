@@ -1,50 +1,116 @@
-<div class="container py-4">
-  <h2 class="mb-4">Trader Plan Generator (HTML/CSS/JS)</h2>
+<div class="container py-4 small">
+  <h2 class="mb-4 fs-4">Trader Plan Generator</h2>
+
   <div class="card mb-4 p-4 shadow-sm">
     <form>
       <div class="row g-3">
         <div class="col-md-3">
           <label class="form-label">Total modal (Rp)</label>
-          <input type="number" class="form-control" placeholder="60000000" />
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">Lot size (lembar per lot)</label>
-          <input type="number" class="form-control" placeholder="100" />
+          <number-input
+            [class]="'form-control form-control-sm border-none'"
+            placeholder="60000000"
+            [model]="totalCapital"
+            (modelChange)="totalCapital = $event ?? 0; saveToStorage()"
+            name="totalCapital"
+          ></number-input>
         </div>
         <div class="col-md-3">
           <label class="form-label">Durasi (hari)</label>
-          <input type="number" class="form-control" placeholder="90" />
+          <number-input
+            [class]="'form-control form-control-sm border-none'"
+            placeholder="90"
+            [model]="durationDays"
+            (modelChange)="durationDays = $event ?? 0; saveToStorage()"
+            name="durationDays"
+          ></number-input>
         </div>
         <div class="col-md-3">
-          <label class="form-label">Jumlah tahap</label>
-          <input type="number" class="form-control" placeholder="3" />
+          <label class="form-label">Jumlah stage</label>
+          <number-input
+            [class]="'form-control form-control-sm border-none'"
+            placeholder="3"
+            [min]="1"
+            [model]="stagesCount"
+            (modelChange)="stagesCount = $event ?? 1; onStagesCountChange()"
+            name="stagesCount"
+          ></number-input>
         </div>
       </div>
+
       <div class="row g-3 mt-2">
         <div class="col-md-4">
-          <label class="form-label">Alokasi tahap (pilih)</label>
-          <select class="form-select">
-            <option>Equal per tahap (sisa dibagi sama rata)</option>
-            <option>Custom allocation</option>
+          <label class="form-label">Alokasi tahap (OPSIONAL)</label>
+          <select
+            class="form-select form-select-sm"
+            [(ngModel)]="allocationMode"
+            name="allocationMode"
+            (ngModelChange)="onAllocationModeChange()"
+          >
+            <option [ngValue]="'equal'">
+              Equal per tahap (sisa dibagi sama rata)
+            </option>
+            <option [ngValue]="'custom'">Custom allocation</option>
           </select>
         </div>
         <div class="col-md-4">
-          <label class="form-label">Stage0 (fix) per saham (lot)</label>
-          <input type="number" class="form-control" placeholder="1" />
+          <label class="form-label">Stage0 (fix) per lot (OPSIONAL)</label>
+          <number-input
+            [class]="'form-control form-control-sm border-none'"
+            placeholder="1"
+            [min]="0"
+            [model]="stage0LotsPerStock"
+            (modelChange)="stage0LotsPerStock = $event ?? 0; saveToStorage()"
+            name="stage0LotsPerStock"
+          ></number-input>
         </div>
         <div class="col-md-4">
-          <label class="form-label">Simpan plan di browser selama...</label>
-          <select class="form-select">
-            <option>Sesuai durasi (hari)</option>
-            <option>Selalu</option>
-          </select>
+          <label class="form-label">Lot size (lembar per lot)</label>
+          <number-input
+            [class]="'form-control form-control-sm border-none'"
+            placeholder="100"
+            [model]="lotSize"
+            (modelChange)="lotSize = $event ?? 0; saveToStorage()"
+            name="lotSize"
+          ></number-input>
         </div>
       </div>
-      <small class="text-muted d-block mt-2"
-        >Tahap 0 = pembelian awal (fix lots per saham). Tahap 1..N =
+
+      <div class="row g-2 mt-3" *ngIf="allocationMode === 'custom'">
+        <div class="col-12">
+          <small class="text-muted"
+            >Alokasi Stage 1..N (total harus 100%)</small
+          >
+        </div>
+        <div
+          class="col-6 col-md-3"
+          *ngFor="let s of getStageList(); let idx = index"
+        >
+          <label class="form-label">Stage {{ s }} (%)</label>
+          <number-input
+            [class]="'form-control'"
+            [min]="0"
+            [max]="100"
+            [(ngModel)]="stageAllocations[idx]"
+            name="stageAllocation{{ idx }}"
+            (ngModelChange)="saveToStorage()"
+          ></number-input>
+        </div>
+        <div class="col-12">
+          <small
+            class="text-{{
+              stageAllocationsSum() === 100 ? 'success' : 'danger'
+            }}"
+          >
+            Total: {{ stageAllocationsSum() | number : "1.0-2" }}%
+          </small>
+        </div>
+      </div>
+
+      <small class="text-muted d-block mt-2">
+        Tahap 0 = pembelian awal (fix lots per saham). Tahap 1..N =
         cicilan/entry selanjutnya. Jika gunakan custom allocation, jumlah
-        persentase harus = 100.</small
-      >
+        persentase harus = 100.
+      </small>
     </form>
   </div>
 
@@ -62,7 +128,7 @@
         <button
           class="btn btn-outline-secondary btn-sm ms-2"
           type="button"
-          (click)="stocks = [{ code: '', weight: 0 }]"
+          (click)="resetStocks()"
         >
           Reset
         </button>
@@ -70,34 +136,62 @@
     </div>
     <div class="table-responsive">
       <table
-        class="table table-bordered table-hover table-striped align-middle mb-0 bg-white"
+        class="table table-sm table-bordered table-hover align-middle mb-0 bg-white"
       >
         <thead class="table-light">
           <tr>
+            <th style="width: 1%"></th>
             <th>Kode</th>
+            <th>Harga Awal</th>
             <th>Bobot %</th>
             <th>Aksi</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let stock of stocks; let i = index">
+          <tr
+            *ngFor="let stock of stocks; let i = index"
+            draggable="true"
+            (dragstart)="onStockDragStart(i)"
+            (dragover)="onStockDragOver($event, i)"
+            (drop)="onStockDrop($event, i)"
+            (dragend)="onStockDragEnd()"
+          >
+            <td style="cursor: grab; user-select: none">
+              <!-- Drag icon: SVG or emoji -->
+              <span title="Drag to reorder" style="font-size: 1.2em"
+                >&#x2630;</span
+              >
+            </td>
             <td>
               <input
                 class="form-control form-control-sm"
                 [(ngModel)]="stock.code"
                 name="code{{ i }}"
-                style="width: 80px"
-                (input)="stock.code = stock.code.toUpperCase()"
+                style="width: 100%"
+                (input)="
+                  stock.code = (stock.code || '').toUpperCase(); saveToStorage()
+                "
               />
             </td>
+            <td class="text-center">
+              <number-input
+                [class]="'form-control form-control-sm text-center'"
+                [model]="planPrices[0][i]"
+                (modelChange)="
+                  planPrices[0][i] = $event ?? 0; onPriceChange(0, i)
+                "
+                name="price0_{{ i }}"
+                placeholder="Harga awal"
+              ></number-input>
+            </td>
             <td>
-              <input
-                class="form-control form-control-sm"
-                type="number"
-                [(ngModel)]="stock.weight"
+              <number-input
+                [class]="'form-control form-control-sm border-none'"
+                [min]="0"
+                [model]="stock.weight"
+                (modelChange)="stock.weight = $event ?? 0; onWeightChange()"
                 name="weight{{ i }}"
-                style="width: 90px"
-              />
+              ></number-input>
             </td>
             <td>
               <button
@@ -112,6 +206,10 @@
           </tr>
         </tbody>
       </table>
+      <small class="text-muted d-block mt-2">
+        Total bobot: {{ stocksWeightSum() | number : "1.0-2" }}% (disarankan
+        100%)
+      </small>
     </div>
   </div>
 
@@ -119,76 +217,105 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
       <strong>Hasil Rencana Trader</strong>
       <div>
-        <button class="btn btn-success btn-sm">Generate Plan</button>
-        <button class="btn btn-outline-success btn-sm ms-2">Export CSV</button>
+        <button
+          class="btn btn-success btn-sm"
+          type="button"
+          (click)="generatePlan()"
+        >
+          Generate Plan
+        </button>
+        <button
+          class="btn btn-outline-success btn-sm ms-2"
+          type="button"
+          (click)="exportCSV()"
+        >
+          Export CSV
+        </button>
       </div>
     </div>
+
     <div class="table-responsive tp-table-responsive">
       <table
-        class="table table-bordered table-hover table-striped align-middle mb-0 bg-white tp-table"
+        class="table table-sm table-bordered table-hover align-middle mb-0 bg-white tp-table"
       >
         <thead class="table-light">
           <tr>
             <th>Stage</th>
-            <th>CDIA</th>
-            <th>BREN</th>
-            <th>PTRO</th>
-            <th>CUAN</th>
+            <th *ngFor="let stock of stocks; let i = index">
+              {{ stock.code || "STOCK " + (i + 1) }}
+            </th>
           </tr>
         </thead>
         <tbody>
-          <tr>
+          <!-- Stage 0 -->
+          <tr *ngIf="stage0LotsPerStock > 0">
             <td>Fase 0 (Harga Awal)</td>
-            <td>1575</td>
-            <td>8000</td>
-            <td>3710</td>
-            <td>1575</td>
+            <td *ngFor="let stock of stocks; let i = index">
+              <number-input
+                [class]="'form-control form-control-sm mb-1'"
+                [model]="planPrices[0][i]"
+                (modelChange)="
+                  planPrices[0][i] = $event ?? 0; onPriceChange(0, i)
+                "
+                name="price0_{{ i }}"
+                placeholder="Harga"
+              ></number-input>
+              <small class="text-muted"
+                >jumlah lot: {{ stage0LotsPerStock }}</small
+              >
+            </td>
           </tr>
-          <tr>
-            <td>Stage 1 (lot)</td>
-            <td>14</td>
-            <td>7</td>
-            <td>6</td>
-            <td>14</td>
+
+          <!-- Stage 1..N -->
+          <tr *ngFor="let s of getStageList(); let si = index">
+            <td>Stage {{ s }}</td>
+            <td *ngFor="let stock of stocks; let i = index">
+              <number-input
+                [class]="'form-control form-control-sm mb-1'"
+                [model]="planPrices[s][i]"
+                (modelChange)="
+                  planPrices[s][i] = $event ?? 0; onPriceChange(s, i)
+                "
+                name="price{{ s }}_{{ i }}"
+                placeholder="Harga"
+              ></number-input>
+              <small class="text-muted">jumlah lot: {{ getLots(s, i) }}</small>
+            </td>
           </tr>
-          <tr>
-            <td>Stage 2 (lot)</td>
-            <td>14</td>
-            <td>7</td>
-            <td>6</td>
-            <td>14</td>
-          </tr>
-          <tr>
-            <td>Stage 3 (lot)</td>
-            <td>1</td>
-            <td>1</td>
-            <td>1</td>
-            <td>1</td>
-          </tr>
+
+          <!-- Totals per stock -->
           <tr class="table-secondary">
             <td><b>Total Lot</b></td>
-            <td>43</td>
-            <td>22</td>
-            <td>19</td>
-            <td>43</td>
+            <td *ngFor="let stock of stocks; let i = index">
+              {{ getTotalLots(i) }}
+            </td>
           </tr>
           <tr>
             <td>Avg Price/lembar</td>
-            <td>1575</td>
-            <td>8000</td>
-            <td>3710</td>
-            <td>1575</td>
+            <td *ngFor="let stock of stocks; let i = index">
+              {{ getAvgPricePerShare(i) | number : "1.0-0" }}
+            </td>
           </tr>
           <tr>
             <td>Total Invest (Rp)</td>
-            <td>6.772.500</td>
-            <td>17.600.000</td>
-            <td>7.059.500</td>
-            <td>6.772.500</td>
+            <td *ngFor="let stock of stocks; let i = index">
+              {{ formatCurrency(getTotalInvestForStock(i)) }}
+            </td>
           </tr>
         </tbody>
       </table>
     </div>
-    <div class="text-muted mt-2 tp-info">Modal awal: Rp 60.000.000</div>
+
+    <h3 class="py-4">Ringkasan:</h3>
+    <div class="text-muted mt-2 tp-info">
+      Investasi Stage 0: {{ formatCurrency(getStage0Invest()) }}<br />
+      <ng-container *ngFor="let s of getStageList(); let idx = index">
+        Alokasi Stage {{ s }}:
+        {{ formatCurrency(getStageAllocatedAmount(s)) }}
+        (terpakai: {{ formatCurrency(getStageUsedAmount(s)) }})<br />
+      </ng-container>
+      Total invested: {{ formatCurrency(getTotalInvested()) }}<br />
+      Sisa modal (final): {{ formatCurrency(getRemainingCapital()) }}
+    </div>
   </div>
 </div>
