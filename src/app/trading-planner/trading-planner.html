@@ -1,0 +1,364 @@
+<div class="trading-planner-container">
+  <div class="header">
+    <h1>🎯 Smart Swing Trading Planner</h1>
+    <p class="subtitle">Perhitungan Lot & DCA Strategy dengan Bobot Portfolio</p>
+  </div>
+
+  <div class="input-section" *ngIf="!tradingPlan">
+    <div class="form-card">
+      <h2>� Modal & Konfigurasi</h2>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="capital">Total Modal (IDR):</label>
+          <input 
+            type="number" 
+            id="capital"
+            [(ngModel)]="totalCapital" 
+            placeholder="100000000"
+            class="form-input">
+          <small>Modal total untuk trading</small>
+        </div>
+
+        <div class="form-group">
+          <label for="lotSize">Lot Size:</label>
+          <input 
+            type="number" 
+            id="lotSize"
+            [(ngModel)]="lotSize" 
+            value="100"
+            class="form-input">
+          <small>Jumlah saham per lot (standar: 100)</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <h2>📊 Konfigurasi Saham & Bobot</h2>
+      <p class="info-text">Total bobot harus 100%. Tentukan harga target sendiri untuk setiap fase berdasarkan analisis Anda.</p>
+      
+      <div class="auto-calculate-section">
+        <div class="calculation-buttons">
+          <button type="button" class="btn-auto-calculate" (click)="autoCalculatePhases()">
+            💡 Suggest Harga (-15% & -30%)
+          </button>
+          <button type="button" class="btn-clear" (click)="clearPhasePrices()">
+            🗑️ Clear Semua Harga
+          </button>
+        </div>
+        <small>Suggestion hanya panduan. Sesuaikan dengan analisis teknikal dan fundamental Anda.</small>
+      </div>
+      
+      <div class="stocks-container">
+        <div class="stock-input" *ngFor="let stock of stockInputs; let i = index">
+          <div class="stock-header">
+            <h4>{{stock.symbol || 'Saham ' + (i + 1)}}</h4>
+            <button 
+              class="btn-remove-small" 
+              (click)="removeStock(i)"
+              [disabled]="stockInputs.length <= 1">
+              🗑️
+            </button>
+          </div>
+          
+          <div class="stock-basic-row">
+            <div class="form-group">
+              <label>Simbol Saham:</label>
+              <input 
+                type="text" 
+                [(ngModel)]="stock.symbol" 
+                placeholder="BREN"
+                class="form-input stock-symbol">
+            </div>
+            
+            <div class="form-group">
+              <label>Bobot (%):</label>
+              <input 
+                type="number" 
+                [(ngModel)]="stock.weight" 
+                min="0" 
+                max="100"
+                class="form-input">
+            </div>
+            
+            <div class="form-group">
+              <label>Harga Saat Ini:</label>
+              <input 
+                type="number" 
+                [(ngModel)]="stock.currentPrice" 
+                min="0"
+                placeholder="7500"
+                class="form-input">
+            </div>
+          </div>
+
+          <div class="phase-prices-section">
+            <h5>🎯 Target Harga Eksekusi (Wajib Diisi):</h5>
+            
+            <div class="phase-price-row">
+              <div class="form-group">
+                <label>Fase 1 - Harga Entry DCA:</label>
+                <div class="price-input-group">
+                  <input 
+                    type="number" 
+                    [(ngModel)]="stock.phase1Price" 
+                    min="1"
+                    placeholder="Tentukan harga entry"
+                    class="form-input price-input"
+                    [class.required]="!stock.phase1Price || stock.phase1Price <= 0">
+                  <span class="percentage-indicator" 
+                        [class.positive]="getPhase1Percentage(stock) > 0"
+                        *ngIf="stock.currentPrice && stock.phase1Price && stock.phase1Price > 0">
+                    {{getPhase1Percentage(stock) > 0 ? '-' : '+'}}{{abs(getPhase1Percentage(stock))}}%
+                  </span>
+                </div>
+                <small>Kapan Anda akan mulai beli DCA pertama?</small>
+              </div>
+              
+              <div class="form-group">
+                <label>Fase 2 - Harga Entry Lanjutan:</label>
+                <div class="price-input-group">
+                  <input 
+                    type="number" 
+                    [(ngModel)]="stock.phase2Price" 
+                    min="1"
+                    placeholder="Tentukan harga lanjutan"
+                    class="form-input price-input"
+                    [class.required]="!stock.phase2Price || stock.phase2Price <= 0">
+                  <span class="percentage-indicator"
+                        [class.positive]="getPhase2Percentage(stock) > 0"
+                        *ngIf="stock.currentPrice && stock.phase2Price && stock.phase2Price > 0">
+                    {{getPhase2Percentage(stock) > 0 ? '-' : '+'}}{{abs(getPhase2Percentage(stock))}}%
+                  </span>
+                </div>
+                <small>Harga untuk DCA lebih agresif jika turun lebih dalam</small>
+              </div>
+            </div>
+
+            <div class="price-strategy-note" *ngIf="stock.currentPrice > 0">
+              <p><strong>💡 Strategy Note:</strong></p>
+              <ul>
+                <li>Fase 1: Entry saat harga mulai menarik di area support</li>
+                <li>Fase 2: Entry agresif jika breakdown dan ada opportunity</li>
+                <li>Sesuaikan dengan level support/resistance dan volume</li>
+                <li>Gunakan analisis teknikal untuk timing yang tepat</li>
+              </ul>
+            </div>
+          </div>
+          
+          <div class="allocation-preview">
+            <span>Alokasi Total: {{formatCurrency(totalCapital * stock.weight / 100)}}</span>
+            <div class="phase-allocation-preview" *ngIf="stock.currentPrice > 0">
+              <span>Fase 0: {{formatCurrency(totalCapital * stock.weight / 100 * 0.05)}}</span>
+              <span>Fase 1: {{formatCurrency(totalCapital * stock.weight / 100 * 0.40)}}</span>
+              <span>Fase 2: {{formatCurrency(totalCapital * stock.weight / 100 * 0.55)}}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="total-weight" [class.invalid]="getTotalWeight() !== 100">
+        <strong>Total Bobot: {{getTotalWeight()}}%</strong>
+        <span *ngIf="getTotalWeight() !== 100" class="error-text">
+          (Harus 100%)
+        </span>
+      </div>
+
+      <button class="btn-add-stock" (click)="addStock()">
+        ➕ Tambah Saham
+      </button>
+    </div>
+
+    <div class="form-card">
+      <h2>⚡ Strategi Fase DCA</h2>
+      <div class="phase-config">
+        <div class="phase-item" *ngFor="let config of phaseConfigs">
+          <div class="phase-info">
+            <strong>Fase {{config.phase}}: {{config.description}}</strong>
+            <span class="allocation-pct">{{config.allocation}}% modal</span>
+          </div>
+          <div class="phase-desc">
+            <span *ngIf="config.phase === 0">Beli minimal 1 lot untuk tracking harga</span>
+            <span *ngIf="config.phase === 1">Trigger: Harga turun 10-15%</span>
+            <span *ngIf="config.phase === 2">Trigger: Harga turun 25-30%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button 
+      class="btn-generate" 
+      (click)="generatePlan()"
+      [disabled]="getTotalWeight() !== 100 || !isPhasePricesValid()">
+      🚀 Generate Lot Calculation Plan
+    </button>
+
+    <div class="validation-messages" *ngIf="getTotalWeight() !== 100 || !isPhasePricesValid()">
+      <p *ngIf="getTotalWeight() !== 100" class="error-msg">
+        ❌ Total bobot harus 100% (saat ini: {{getTotalWeight()}}%)
+      </p>
+      <p *ngIf="!isPhasePricesValid()" class="error-msg">
+        ❌ Mohon isi semua harga target untuk fase 1 dan 2
+      </p>
+    </div>
+  </div>
+
+  <div class="plan-section" *ngIf="tradingPlan">
+    <div class="plan-header">
+      <h2>📈 Trading Plan & Lot Calculation</h2>
+      <button class="btn-reset" (click)="resetPlan()">🔄 Reset</button>
+    </div>
+
+    <div class="plan-overview">
+      <div class="overview-card">
+        <h3>� Portfolio Overview</h3>
+        <div class="overview-stats">
+          <div class="stat">
+            <span class="label">Total Modal:</span>
+            <span class="value">{{formatCurrency(totalCapital)}}</span>
+          </div>
+          <div class="stat">
+            <span class="label">Jumlah Saham:</span>
+            <span class="value">{{tradingPlan.stocks.length}} saham</span>
+          </div>
+          <div class="stat">
+            <span class="label">Lot Size:</span>
+            <span class="value">{{lotSize}} saham/lot</span>
+          </div>
+          <div class="stat">
+            <span class="label">Strategi:</span>
+            <span class="value">DCA 3 Fase</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="phases-container">
+      <div class="phase-card" *ngFor="let phase of tradingPlan.phaseStrategy; let phaseIndex = index">
+        <div class="phase-header">
+          <h3>
+            <span class="phase-badge">Fase {{phase.phase}}</span>
+            {{phase.triggerCondition}}
+          </h3>
+          <div class="phase-stats">
+            <span class="investment-amount">
+              Modal Fase: {{formatCurrency(calculateTotalInvestment(phase))}}
+            </span>
+            <span class="cumulative-amount">
+              Kumulatif: {{formatCurrency(calculateCumulativeInvestment(phaseIndex))}}
+            </span>
+          </div>
+        </div>
+
+        <div class="lot-calculation-table">
+          <div class="table-header">
+            <div class="col">Saham</div>
+            <div class="col">Bobot</div>
+            <div class="col">Harga Target</div>
+            <div class="col">Jumlah Lot</div>
+            <div class="col">Nilai/Lot</div>
+            <div class="col">Total Investasi</div>
+          </div>
+          
+          <div class="table-row" *ngFor="let allocation of phase.allocations">
+            <div class="col stock-symbol">
+              <strong>{{allocation.symbol}}</strong>
+            </div>
+            <div class="col weight">
+              {{allocation.weight}}%
+            </div>
+            <div class="col price">
+              {{formatPrice(allocation.currentPrice)}}
+            </div>
+            <div class="col lots">
+              <span class="lot-number">{{allocation.targetLots}}</span>
+              <small>lot</small>
+            </div>
+            <div class="col lot-value">
+              {{formatCurrency(allocation.lotValue)}}
+            </div>
+            <div class="col investment">
+              {{formatCurrency(allocation.actualInvestment)}}
+            </div>
+          </div>
+        </div>
+
+        <div class="phase-notes">
+          <h4>📝 Execution Notes:</h4>
+          <ul>
+            <li *ngFor="let allocation of phase.allocations">
+              <strong>{{allocation.symbol}}:</strong> {{allocation.notes}}
+            </li>
+          </ul>
+        </div>
+
+        <div class="phase-summary" *ngIf="phase.phase === 0">
+          <div class="summary-card tracker">
+            <h4>🎯 Tracker Strategy</h4>
+            <p>Beli minimal 1 lot setiap saham untuk monitoring pergerakan harga. 
+               Set alert untuk trigger fase berikutnya saat harga turun.</p>
+          </div>
+        </div>
+
+        <div class="phase-summary" *ngIf="phase.phase > 0">
+          <div class="summary-card dca">
+            <h4>📉 DCA Strategy</h4>
+            <p>Tunggu hingga harga mencapai target, lalu eksekusi pembelian sesuai lot yang dihitung.
+               Gunakan limit order untuk memastikan harga yang diinginkan.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="risk-management">
+      <h3>⚠️ Risk Management & Execution Guidelines</h3>
+      <div class="risk-cards">
+        <div class="risk-card">
+          <h4>� Position Sizing</h4>
+          <p>Maksimal {{(100/tradingPlan.stocks.length).toFixed(1)}}% per saham sesuai bobot yang ditentukan. 
+             Jangan melebihi alokasi yang sudah ditetapkan.</p>
+        </div>
+        <div class="risk-card">
+          <h4>�📉 Stop Loss</h4>
+          <p>Set stop loss 8-10% dari rata-rata harga beli. 
+             Review setelah setiap fase untuk adjustment.</p>
+        </div>
+        <div class="risk-card">
+          <h4>⏰ Timing</h4>
+          <p>Fase 0: Immediate execution untuk tracker<br>
+             Fase 1: Wait for 10-15% drop<br>
+             Fase 2: Wait for 25-30% drop</p>
+        </div>
+        <div class="risk-card">
+          <h4>🔄 Monitoring</h4>
+          <p>Set price alerts untuk trigger setiap fase. 
+             Review portfolio balance setiap minggu untuk rebalancing jika diperlukan.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="execution-checklist">
+      <h3>✅ Execution Checklist</h3>
+      <div class="checklist-card">
+        <div class="checklist-section">
+          <h4>Sebelum Trading:</h4>
+          <ul>
+            <li>☐ Konfirmasi harga real-time setiap saham</li>
+            <li>☐ Set price alerts untuk trigger fase 1 & 2</li>
+            <li>☐ Pastikan dana tersedia sesuai alokasi</li>
+            <li>☐ Review fundamental setiap saham</li>
+          </ul>
+        </div>
+        <div class="checklist-section">
+          <h4>Saat Eksekusi:</h4>
+          <ul>
+            <li>☐ Gunakan limit order sesuai harga target</li>
+            <li>☐ Eksekusi sesuai jumlah lot yang dihitung</li>
+            <li>☐ Set stop loss setelah order filled</li>
+            <li>☐ Update tracking spreadsheet</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

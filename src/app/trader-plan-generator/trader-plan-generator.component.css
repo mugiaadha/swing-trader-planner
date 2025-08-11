@@ -1,0 +1,31 @@
+.tp-card {
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+}
+
+.tp-table-header {
+  margin-bottom: 1rem;
+}
+
+.tp-table-responsive {
+  margin-bottom: 0;
+}
+
+.tp-table {
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.tp-info {
+  color: #888;
+  font-size: 0.97rem;
+}
+.tp-generator-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px;
+  background: #f8f9fa;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+}

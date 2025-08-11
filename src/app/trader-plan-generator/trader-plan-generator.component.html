@@ -1,0 +1,194 @@
+<div class="container py-4">
+  <h2 class="mb-4">Trader Plan Generator (HTML/CSS/JS)</h2>
+  <div class="card mb-4 p-4 shadow-sm">
+    <form>
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label">Total modal (Rp)</label>
+          <input type="number" class="form-control" placeholder="60000000" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Lot size (lembar per lot)</label>
+          <input type="number" class="form-control" placeholder="100" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Durasi (hari)</label>
+          <input type="number" class="form-control" placeholder="90" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Jumlah tahap</label>
+          <input type="number" class="form-control" placeholder="3" />
+        </div>
+      </div>
+      <div class="row g-3 mt-2">
+        <div class="col-md-4">
+          <label class="form-label">Alokasi tahap (pilih)</label>
+          <select class="form-select">
+            <option>Equal per tahap (sisa dibagi sama rata)</option>
+            <option>Custom allocation</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Stage0 (fix) per saham (lot)</label>
+          <input type="number" class="form-control" placeholder="1" />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Simpan plan di browser selama...</label>
+          <select class="form-select">
+            <option>Sesuai durasi (hari)</option>
+            <option>Selalu</option>
+          </select>
+        </div>
+      </div>
+      <small class="text-muted d-block mt-2"
+        >Tahap 0 = pembelian awal (fix lots per saham). Tahap 1..N =
+        cicilan/entry selanjutnya. Jika gunakan custom allocation, jumlah
+        persentase harus = 100.</small
+      >
+    </form>
+  </div>
+
+  <div class="card mb-4 p-4 shadow-sm">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <strong>Daftar Saham</strong>
+      <div>
+        <button
+          class="btn btn-primary btn-sm"
+          type="button"
+          (click)="addStock()"
+        >
+          + Tambah Saham
+        </button>
+        <button
+          class="btn btn-outline-secondary btn-sm ms-2"
+          type="button"
+          (click)="stocks = [{ code: '', weight: 0 }]"
+        >
+          Reset
+        </button>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table
+        class="table table-bordered table-hover table-striped align-middle mb-0 bg-white"
+      >
+        <thead class="table-light">
+          <tr>
+            <th>Kode</th>
+            <th>Bobot %</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let stock of stocks; let i = index">
+            <td>
+              <input
+                class="form-control form-control-sm"
+                [(ngModel)]="stock.code"
+                name="code{{ i }}"
+                style="width: 80px"
+                (input)="stock.code = stock.code.toUpperCase()"
+              />
+            </td>
+            <td>
+              <input
+                class="form-control form-control-sm"
+                type="number"
+                [(ngModel)]="stock.weight"
+                name="weight{{ i }}"
+                style="width: 90px"
+              />
+            </td>
+            <td>
+              <button
+                class="btn btn-danger btn-sm"
+                type="button"
+                (click)="removeStock(i)"
+                [disabled]="stocks.length === 1"
+              >
+                x
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card mb-4 p-4 shadow-sm">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <strong>Hasil Rencana Trader</strong>
+      <div>
+        <button class="btn btn-success btn-sm">Generate Plan</button>
+        <button class="btn btn-outline-success btn-sm ms-2">Export CSV</button>
+      </div>
+    </div>
+    <div class="table-responsive tp-table-responsive">
+      <table
+        class="table table-bordered table-hover table-striped align-middle mb-0 bg-white tp-table"
+      >
+        <thead class="table-light">
+          <tr>
+            <th>Stage</th>
+            <th>CDIA</th>
+            <th>BREN</th>
+            <th>PTRO</th>
+            <th>CUAN</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Fase 0 (Harga Awal)</td>
+            <td>1575</td>
+            <td>8000</td>
+            <td>3710</td>
+            <td>1575</td>
+          </tr>
+          <tr>
+            <td>Stage 1 (lot)</td>
+            <td>14</td>
+            <td>7</td>
+            <td>6</td>
+            <td>14</td>
+          </tr>
+          <tr>
+            <td>Stage 2 (lot)</td>
+            <td>14</td>
+            <td>7</td>
+            <td>6</td>
+            <td>14</td>
+          </tr>
+          <tr>
+            <td>Stage 3 (lot)</td>
+            <td>1</td>
+            <td>1</td>
+            <td>1</td>
+            <td>1</td>
+          </tr>
+          <tr class="table-secondary">
+            <td><b>Total Lot</b></td>
+            <td>43</td>
+            <td>22</td>
+            <td>19</td>
+            <td>43</td>
+          </tr>
+          <tr>
+            <td>Avg Price/lembar</td>
+            <td>1575</td>
+            <td>8000</td>
+            <td>3710</td>
+            <td>1575</td>
+          </tr>
+          <tr>
+            <td>Total Invest (Rp)</td>
+            <td>6.772.500</td>
+            <td>17.600.000</td>
+            <td>7.059.500</td>
+            <td>6.772.500</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="text-muted mt-2 tp-info">Modal awal: Rp 60.000.000</div>
+  </div>
+</div>
