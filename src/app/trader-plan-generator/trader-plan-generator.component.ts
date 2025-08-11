@@ -88,7 +88,11 @@ export class TraderPlanGeneratorComponent implements OnInit {
       if (this.planPricesManual[s]) this.planPricesManual[s].splice(index, 1);
       if (this.plannedLots[s]) this.plannedLots[s].splice(index, 1);
     }
-    this.equalizeWeightsIfNeeded();
+    // Jika allocationMode 'equal', bobot selalu di-equalize dan autoWeights diaktifkan
+    if (this.allocationMode === 'equal') {
+      this.autoWeights = true;
+      this.equalizeWeightsIfNeeded(true);
+    }
     this.recalcPlannedLots();
     this.saveToStorage();
   }
@@ -219,7 +223,8 @@ export class TraderPlanGeneratorComponent implements OnInit {
       }
     }
 
-    // --- Tambahan: Otomatis belikan sisa modal ke saham manapun yang bisa dibeli (prioritas bobot terbesar, jika sama prioritas index terkecil) ---
+    // --- Tambahan: Otomatis belikan sisa modal ke saham manapun yang bisa dibeli (prioritas bobot terbesar, jika sama prioritas index terkecil),
+    // tapi JANGAN melebihi batas bobot maksimal per saham ---
     let remaining = this.totalCapital - this.getTotalInvested();
     const sorted = this.stocks
       .map((stock, idx) => ({ idx, weight: stock.weight ?? 0 }))
@@ -232,6 +237,16 @@ export class TraderPlanGeneratorComponent implements OnInit {
     while (found && remaining > 0) {
       found = false;
       for (const s of sorted) {
+        // Hitung batas maksimal investasi untuk saham ini
+        const maxInvest = this.totalCapital * (s.weight / 100);
+        // Hitung total investasi saham ini (semua stage)
+        let totalInvest = 0;
+        for (let stage = 0; stage <= this.stagesCount; stage++) {
+          const lots = this.plannedLots[stage]?.[s.idx] || 0;
+          let price = this.planPrices[stage]?.[s.idx] ?? 0;
+          if (!price || price <= 0) price = this.planPrices[0]?.[s.idx] ?? 0;
+          totalInvest += lots * this.lotSize * price;
+        }
         // Cari harga terakhir (stage terakhir yang diisi) untuk saham ini
         let lastPrice = 0;
         for (let stage = this.stagesCount; stage >= 0; stage--) {
@@ -246,7 +261,8 @@ export class TraderPlanGeneratorComponent implements OnInit {
         }
         if (lastPrice > 0) {
           const lotCost = lastPrice * this.lotSize;
-          if (lotCost <= remaining) {
+          // Cek apakah masih boleh tambah lot tanpa melebihi maxInvest
+          if (lotCost <= remaining && (totalInvest + lotCost) <= maxInvest + 1e-6) {
             let targetStage = this.stagesCount;
             if (!this.plannedLots[targetStage])
               this.plannedLots[targetStage] = [];
