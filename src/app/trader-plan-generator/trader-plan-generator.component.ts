@@ -24,7 +24,7 @@ export class TraderPlanGeneratorComponent implements OnInit {
   durationDays = 90;
   stagesCount = 3;
   allocationMode: AllocationMode = 'equal';
-  stage0LotsPerStock = 1;
+  stage0LotsPerStock = 0;
 
   stocks: Stock[] = [{ code: '', weight: 0 }];
   stageAllocations: number[] = [];
