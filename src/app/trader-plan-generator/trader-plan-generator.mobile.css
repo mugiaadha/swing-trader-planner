@@ -1,0 +1,150 @@
+  .tp-info-summary {
+    background: #fffbe6;
+    border: 2px solid #ffd700;
+    border-radius: 0.7rem;
+    color: #222;
+    font-size: 0.98rem;
+    padding: 0.8rem 1.1rem;
+    margin-top: 1.2rem;
+    margin-bottom: 1.2rem;
+    box-shadow: 0 2px 8px 0 rgba(255,215,0,0.08);
+  }
+  .tp-info-summary b {
+    color: #b8860b;
+  }
+  .tp-info-summary .tp-info-used {
+    color: #e67e22;
+    font-weight: 500;
+    margin-left: 0.3em;
+  }
+.tp-table th,
+.tp-table td,
+.table th,
+.table td {
+  width: auto;
+  max-width: 0.9px;
+  min-width: 0.3px;
+  word-break: break-word;
+  text-align: center;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+.tp-table th:first-child,
+.tp-table td:first-child,
+.table th:first-child,
+.table td:first-child {
+  min-width: 28px;
+  max-width: 36px;
+  text-align: center;
+}
+table.tp-table,
+.table,
+.tp-table th,
+.tp-table td,
+.table th,
+.table td {
+  font-size: 0.75rem !important;
+  padding: 0.25rem 0.3rem !important;
+}
+/* Mobile-friendly overrides for trader-plan-generator */
+@media (max-width: 768px) {
+  body {
+    background: #f7f7fa;
+    font-size: 12px !important;
+  }
+  .container {
+    padding: 1rem 0.5rem !important;
+  }
+  .card {
+    padding: 1.2rem 0.7rem !important;
+    border-radius: 1.1rem !important;
+    background: #fff;
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.06);
+    margin-bottom: 1.2rem !important;
+  }
+  .row.g-3,
+  .row.g-2,
+  .row {
+    flex-direction: column !important;
+    gap: 1.1rem !important;
+  }
+  .col-md-3,
+  .col-md-4,
+  .col-6,
+  .col-12,
+  .col-4 {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 0 0 100% !important;
+    margin-bottom: 0.7rem;
+  }
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 0.7rem;
+    background: #f9f9fb;
+    padding-bottom: 0.5rem;
+  }
+  table.tp-table,
+  .table {
+    font-size: 1.08rem;
+    min-width: 650px;
+    background: #fff;
+    border-radius: 0.7rem;
+    overflow: hidden;
+  }
+  .tp-table-responsive {
+    margin-bottom: 1.2rem;
+  }
+  .btn,
+  .form-control,
+  .form-select,
+  number-input,
+  number-input * {
+    font-size: 0.82rem !important;
+    padding: 0.14rem 0.32rem !important;
+    border-radius: 0.32rem !important;
+    min-width: 20px;
+    min-height: 20px;
+    box-sizing: border-box;
+  }
+  .btn {
+    width: auto;
+    min-width: 60px;
+    margin-bottom: 0.2rem;
+    padding-left: 0.7em !important;
+    padding-right: 0.7em !important;
+  }
+  number-input,
+  number-input * {
+    width: 100%;
+    max-width: 100%;
+  }
+  .tp-info {
+    font-size: 1.05rem;
+    word-break: break-word;
+    background: #f3f6fa;
+    border-radius: 0.7rem;
+    padding: 0.7rem 1rem;
+    margin-top: 1rem;
+  }
+  h2,
+  h3,
+  strong {
+    font-size: 0.95rem !important;
+  }
+  .d-flex {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.7rem;
+  }
+  label,
+  .form-label {
+    font-size: 0.85rem !important;
+    margin-bottom: 0.18rem;
+  }
+  small,
+  .text-muted {
+    font-size: 0.82rem !important;
+  }
+}

@@ -384,7 +384,6 @@ export class TraderPlanGeneratorComponent implements OnInit {
       const raw = localStorage.getItem(this.storageKey);
       if (!raw) return;
       const data = JSON.parse(raw);
-      console.log('Data loaded:', data); // untuk debug
       this.totalCapital = data.totalCapital ?? this.totalCapital;
       this.durationDays = data.durationDays ?? this.durationDays;
       this.stagesCount = data.stagesCount ?? this.stagesCount;

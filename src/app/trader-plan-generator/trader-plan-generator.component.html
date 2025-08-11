@@ -1,3 +1,4 @@
+<link rel="stylesheet" href="./trader-plan-generator.mobile.css" />
 <div class="container py-4 small">
   <h2 class="mb-4 fs-4">Trader Plan Generator</h2>
 
@@ -126,7 +127,7 @@
           + Tambah Saham
         </button>
         <button
-          class="btn btn-outline-secondary btn-sm ms-2"
+          class="btn btn-outline-secondary btn-sm mx-2"
           type="button"
           (click)="resetStocks()"
         >
@@ -140,11 +141,11 @@
       >
         <thead class="table-light">
           <tr>
-            <th style="width: 1%"></th>
-            <th>Kode</th>
-            <th>Harga Awal</th>
-            <th>Bobot %</th>
-            <th>Aksi</th>
+            <th style="width: 1%">#</th>
+            <th style="width: 10%">Kode</th>
+            <th style="width: 20%">Harga Awal</th>
+            <th style="width: 20%">Bobot %</th>
+            <th style="width: 10%">Aksi</th>
           </tr>
         </thead>
         <tbody>
@@ -195,12 +196,12 @@
             </td>
             <td>
               <button
-                class="btn btn-danger btn-sm"
+                class="btn btn-default text-danger"
                 type="button"
                 (click)="removeStock(i)"
                 [disabled]="stocks.length === 1"
               >
-                x
+                <span class="bi bi-trash"></span>
               </button>
             </td>
           </tr>
@@ -225,7 +226,7 @@
           Calculate
         </button>
         <button
-          class="btn btn-outline-success btn-sm ms-2"
+          class="btn btn-outline-success btn-sm mx-2"
           type="button"
           (click)="exportCSV()"
         >
@@ -240,8 +241,8 @@
       >
         <thead class="table-light">
           <tr>
-            <th>Stage</th>
-            <th *ngFor="let stock of stocks; let i = index">
+            <th style="width: 10%">Stage</th>
+            <th *ngFor="let stock of stocks; let i = index" style="width: 20%">
               {{ stock.code || "STOCK " + (i + 1) }}
             </th>
           </tr>
@@ -306,16 +307,29 @@
       </table>
     </div>
 
-    <h3 class="py-4">Ringkasan:</h3>
-    <div class="text-muted mt-2 tp-info">
-      Investasi Stage 0: {{ formatCurrency(getStage0Invest()) }}<br />
+    <h5 class="py-2">Ringkasan:</h5>
+    <div class="tp-info-summary mt-2">
+      <div>
+        <b>Investasi Stage 0: </b>
+        <span> {{ formatCurrency(getStage0Invest()) }}</span>
+      </div>
       <ng-container *ngFor="let s of getStageList(); let idx = index">
-        Alokasi Stage {{ s }}:
-        {{ formatCurrency(getStageAllocatedAmount(s)) }}
-        (terpakai: {{ formatCurrency(getStageUsedAmount(s)) }})<br />
+        <div>
+          <b>Alokasi Stage {{ s }}:</b>
+          <span> {{ formatCurrency(getStageAllocatedAmount(s)) }}</span>
+          <span class="tp-info-used"
+            >(terpakai: {{ formatCurrency(getStageUsedAmount(s)) }})</span
+          >
+        </div>
       </ng-container>
-      Total invested: {{ formatCurrency(getTotalInvested()) }}<br />
-      Sisa modal (final): {{ formatCurrency(getRemainingCapital()) }}
+      <div>
+        <b>Total invested:</b>
+        <span> {{ formatCurrency(getTotalInvested()) }}</span>
+      </div>
+      <div>
+        <b>Sisa modal (final):</b>
+        <span> {{ formatCurrency(getRemainingCapital()) }}</span>
+      </div>
     </div>
   </div>
 </div>
